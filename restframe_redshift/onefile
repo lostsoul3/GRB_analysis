@@ -1,0 +1,3 @@
+with open('onefile',"w") as f:
+	f.write("\n".join(" ".join(map(str, x)) for x in (data)))
+
