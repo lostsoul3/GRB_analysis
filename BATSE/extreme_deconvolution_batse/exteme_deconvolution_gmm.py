@@ -135,6 +135,7 @@ def plot_results(X, Y_, means, covariances, index, title):
 
 def plot_ellipses(X, Xerr, optimal_n_components):
     xdgmm = XDGMM(n_components=2, n_iter=1000)
+    xdgmm.fit(X, Xerr)
     plot_results(X, xdgmm.predict(X, Xerr), xdgmm.mu, xdgmm.V, 0,
                  'Gaussian Mixture')
     plt.xlabel('Log(T90)', size=20)
@@ -142,6 +143,6 @@ def plot_ellipses(X, Xerr, optimal_n_components):
     plt.show()
 
 X, Xerr = extract_data_and_data_error()
-bic, aic, optimal_n_components = get_computed_models(X, Xerr)
-plot_data_points(bic=bic, aic=aic)
-plot_ellipses(X, Xerr)
+# bic, aic, optimal_n_components = get_computed_models(X, Xerr)
+# plot_data_points(bic=bic, aic=aic)
+plot_ellipses(X, Xerr, 2)
