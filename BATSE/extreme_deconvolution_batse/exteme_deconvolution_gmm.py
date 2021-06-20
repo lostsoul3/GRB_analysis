@@ -22,6 +22,8 @@ import matplotlib
 import pandas as pd
 import numpy as np
 import math
+
+import xdgmm
 from sklearn.mixture import GaussianMixture
 from matplotlib import pyplot as plt
 import itertools
@@ -133,16 +135,111 @@ def plot_results(X, Y_, means, covariances, index, title):
         ell.set_alpha(0.5)
         splot.add_artist(ell)
 
-def plot_ellipses(X, Xerr, optimal_n_components):
-    xdgmm = XDGMM(n_components=2, n_iter=1000)
-    xdgmm.fit(X, Xerr)
+'''
+batse.txt
+Batse data shape is (1973, 20)
+HRr is 1934 and T90 is 1934
+Delta HRr is 1934 and Delta T90 is 1934
+[[ 3.08168728  0.22178302]
+ [-0.2917376   0.52172023]]
+Variance is [[[ 0.80785102  0.00256417]
+  [ 0.00256417  0.15655426]]
+
+ [[ 1.65568657 -0.14936446]
+  [-0.14936446  0.48620792]]]
+'''
+def plot_ellipses(xdgmm):
+    print(xdgmm.mu)
+    print("Variance is {}".format(xdgmm.V))
     plot_results(X, xdgmm.predict(X, Xerr), xdgmm.mu, xdgmm.V, 0,
                  'Gaussian Mixture')
     plt.xlabel('Log(T90)', size=20)
     plt.ylabel('Log(Hardness Ratio)', size=20)
     plt.show()
 
+def get_delta_aic_and_bic(X, Xerr, aic, bic, optimal_n_components):
+    xdgmm = None
+    xdgmm_2 = XDGMM(n_components=2, n_iter=1000)
+    xdgmm_2.fit(X, Xerr)
+
+    xdgmm_3 = XDGMM(n_components=3, n_iter=1000)
+    xdgmm_3.fit(X, Xerr)
+
+    # AIC(n_components=2) - AIC(n_components=3)
+    delta_aic = aic[1] - aic[2]
+    # BIC(n_components=2) - BIC(n_components=3)
+    delta_bic = bic[1] - bic[2]
+
+    print("Delta AIC is : {} and Delta BIC is : {}".format(delta_aic, delta_bic))
+    means = None
+    covars = None
+    weights = None
+
+    means = xdgmm_2.mu
+    covars = xdgmm_2.V
+    weights = xdgmm_2.weights
+    xdgmm = xdgmm_2
+    print("Means of 2 components are {} and Covars are {}".format(means, covars))
+
+    print("Means of 3 components are {} and Covars are {}".format(xdgmm_3.mu, xdgmm_3.V))
+    if optimal_n_components == 3:
+        means = xdgmm_3.mu
+        covars = xdgmm_3.V
+        weights = xdgmm_3.weights
+        xdgmm = xdgmm_3
+
+    print("Total number of GRBs is {}".format(len(X)))
+    i = 0
+    for weight in weights:
+        print("Group {} has {} datapoints\n".format(i,(weight * len(X))))
+        i = i+1
+
+    return delta_aic, delta_bic, xdgmm, weights, means, covars
+
 X, Xerr = extract_data_and_data_error()
-# bic, aic, optimal_n_components = get_computed_models(X, Xerr)
-# plot_data_points(bic=bic, aic=aic)
-plot_ellipses(X, Xerr, 2)
+bic, aic, optimal_n_components = get_computed_models(X, Xerr)
+plot_data_points(bic=bic, aic=aic)
+delta_aic, delta_bic, xdgmm_final, weights, means, covars = get_delta_aic_and_bic(X, Xerr, aic, bic, optimal_n_components)
+plot_ellipses(xdgmm_final)
+
+
+'''
+batse.txt
+Batse data shape is (1973, 20)
+HRr is 1934 and T90 is 1934
+Delta HRr is 1934 and Delta T90 is 1934
+N = 1 , BIC = 36816.86362541112
+N = 2 , BIC = 36704.858270565914
+N = 3 , BIC = 36747.734822927654
+N = 4 , BIC = 36790.949426954416
+N = 5 , BIC = 36815.453520954834
+
+N = 1 , AIC = 36789.02689703105
+N = 2 , AIC = 36643.617600773585
+N = 3 , AIC = 36653.094023664686
+N = 4 , AIC = 36664.83925397804
+N = 5 , AIC = 36654.22703883427
+
+optimal bic 2
+optimal aic 2
+Delta AIC is : -9.47642289110081 and Delta BIC is : -42.87655236174032
+Total number of GRBs is 1934
+Group 0 has 1126.1315927375815 datapoints
+
+Group 0 has 807.8684072624177 datapoints
+
+Means are [[ 3.08168021  0.22176392]
+ [-0.29174965  0.52153826]] and Covars are [[[ 0.80785907  0.00257883]
+  [ 0.00257883  0.15634822]]
+
+ [[ 1.65567045 -0.14956596]
+  [-0.14956596  0.485987  ]]]
+[[ 3.08168021  0.22176392]
+ [-0.29174965  0.52153826]]
+Variance is [[[ 0.80785907  0.00257883]
+  [ 0.00257883  0.15634822]]
+
+ [[ 1.65567045 -0.14956596]
+  [-0.14956596  0.485987  ]]]
+
+'''
