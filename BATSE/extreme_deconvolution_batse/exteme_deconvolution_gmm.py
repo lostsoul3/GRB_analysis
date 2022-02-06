@@ -70,6 +70,8 @@ def extract_data_and_data_error():
                     dhr.append(dhr_i)
                     hardness_ratio.append(hr)
                     t90.append(t90_i)
+                else:
+                    print("GRB invalid : {}".format(batse_data[i]))
     print("HRr is {} and T90 is {}".format(len(hardness_ratio), len(t90)))
     print("Delta HRr is {} and Delta T90 is {}".format(len(dhr), len(dt90)))
 
@@ -144,4 +146,3 @@ def plot_ellipses(X, Xerr, optimal_n_components):
 X, Xerr = extract_data_and_data_error()
 bic, aic, optimal_n_components = get_computed_models(X, Xerr)
 plot_data_points(bic=bic, aic=aic)
-plot_ellipses(X, Xerr)
